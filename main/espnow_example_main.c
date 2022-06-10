@@ -164,6 +164,45 @@ static void example_espnow_task(void *pvParameter)
             if (ret == EXAMPLE_ESPNOW_DATA_SEND)
             {
                 ESP_LOGI(TAG, "Received send data from: " MACSTR ", len: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
+
+                if (esp_now_is_peer_exist(recv_cb->mac_addr) == true)
+                {
+                    /* Initialize sending parameters. */
+                    send_param = malloc(sizeof(example_espnow_send_param_t));
+                    memset(send_param, 0, sizeof(example_espnow_send_param_t));
+                    if (send_param == NULL)
+                    {
+                        ESP_LOGE(TAG, "Malloc send parameter fail");
+                        vSemaphoreDelete(s_example_espnow_queue);
+                        esp_now_deinit();
+                        return ESP_FAIL;
+                    }
+                    send_param->len = sizeof(example_espnow_data_t);
+                    send_param->buffer = malloc(sizeof(example_espnow_data_t));
+                    if (send_param->buffer == NULL)
+                    {
+                        ESP_LOGE(TAG, "Malloc send buffer fail");
+                        free(send_param);
+                        vSemaphoreDelete(s_example_espnow_queue);
+                        esp_now_deinit();
+                        return ESP_FAIL;
+                    }
+
+                    /* Start sending unicast ESPNOW data. */
+                    memcpy(send_param->dest_mac, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
+                    example_espnow_data_prepare(send_param, EXAMPLE_ESPNOW_DATA_SEND, 123.1, 132.1, 123);
+                    // ESP_LOGI(TAG, "Send data to " MACSTR "", MAC2STR(recv_cb->mac_addr));
+                    if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK)
+                    {
+                        ESP_LOGE(TAG, "Send error");
+                        example_espnow_deinit(send_param);
+                        vTaskDelete(NULL);
+                    }
+                }
+                else
+                {
+                    ESP_LOGW(TAG, "Device " MACSTR " isn't paired yet.", MAC2STR(recv_cb->mac_addr));
+                }
             }
             else if (ret == EXAMPLE_ESPNOW_DATA_HEARTBEAT)
             {
@@ -195,7 +234,7 @@ static void example_espnow_task(void *pvParameter)
                     /* Start sending unicast ESPNOW data. */
                     memcpy(send_param->dest_mac, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
                     example_espnow_data_prepare(send_param, EXAMPLE_ESPNOW_DATA_HEARTBEAT, 123.1, 132.1, 123);
-                    ESP_LOGI(TAG, "Send data to " MACSTR "", MAC2STR(recv_cb->mac_addr));
+                    // ESP_LOGI(TAG, "Send data to " MACSTR "", MAC2STR(recv_cb->mac_addr));
                     if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK)
                     {
                         ESP_LOGE(TAG, "Send error");
@@ -261,7 +300,7 @@ static void example_espnow_task(void *pvParameter)
                 /* Start sending unicast ESPNOW data. */
                 memcpy(send_param->dest_mac, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
                 example_espnow_data_prepare(send_param, EXAMPLE_ESPNOW_DATA_PAIR, 123.1, 132.1, 123);
-                ESP_LOGI(TAG, "Send data to " MACSTR "", MAC2STR(recv_cb->mac_addr));
+                // ESP_LOGI(TAG, "Send data to " MACSTR "", MAC2STR(recv_cb->mac_addr));
                 if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK)
                 {
                     ESP_LOGE(TAG, "Send error");
