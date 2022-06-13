@@ -1,0 +1,3 @@
+[submodule "components/gateway-common-esp32"]
+	path = components/gateway-common-esp32
+	url = https://GrupoOrionDev@dev.azure.com/GrupoOrionDev/PlataformaBe/_git/gateway-common-esp32
