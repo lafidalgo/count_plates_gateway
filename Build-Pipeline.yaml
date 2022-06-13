@@ -1,0 +1,23 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - dev
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: Bash@3
+  displayName: 'Environment-setup'
+  inputs:
+    filePath: 'script_levantamento_idf/levantamento_idf.sh'
+    noRc: false
+
+- task: Bash@3
+  displayName: 'Build'
+  inputs:
+    targetType: 'inline'
+    script: |
+      . $HOME/esp/esp-idf/export.sh
+      idf.py build

@@ -1,1 +1,82 @@
-# count_plates_gateway
+# Padrão de Programação
+- Neste projeto, o seguinte padrão é usado:
+    - https://users.ece.cmu.edu/~eno/coding/CCodingStandard.html
+# Tutorial de instalação
+- Dê um git clone neste repositório (no windows é recomendado clonar próximo à pasta raiz C:/ ou D:/);
+- Entre na pasta clonada com o vscode (gitlens é extremamente recomendado) e entre na branch "dev";
+- Nesta branch, aplique os comandos:
+    - git submodule update --init --recursive
+- Mude o repositório Common para a branch de dev;
+- Entre em sua branch.
+# Tutorial de build e flash
+- Instale a extensão Espressif IDF;
+- Reinicie o vscode e execute o que a extensão dizer;
+- Exporte as variáveis de ambiente pelo comando:
+    - Linux: . ~/esp/esp-idf/export.sh
+    - Windows: C:\Users\ (Seu usuário) \esp\esp-idf\export.ps1
+- Desative a opção Enable trusted root certificate bundle;
+- Execute o comando "idf.py build" para construir o programa;
+- Cheque se tem os drivers de porta serial instalados (windows);
+- Cheque a porta serial no device manager/Ports (windows) ou pelo terminal;
+- Execute o comando "idf.py -p (porta que você viu) flash";
+- Cheque com o PuTTY, na porta vista, para ver o que o ESP produz.
+# Comandos Importantes
+- "idf.py build" (Construção do programa);
+- "idf.py menuconfig" (Menu para configuração da build, não funciona no terminal do vscode no windows);
+- "idf.py -p (porta que você viu) flash" (Para colocar o programa no ESP);
+- Exportação de variáveis do ESP-IDF:
+    - Linux: . ~/esp/esp-idf/export.sh
+    - Windows: C:\Users\ (Seu usuário) \esp\esp-idf\export.ps1
+# Conexão na Rede
+- Crie dois arquivos na pasta spiffs_rede:
+    - rede.txt
+- Configure as chaves da pasta spiffs_certs:
+    - Execute o script config_cert.py e siga os passos;
+    - Entre no IotHub e entre em IOT Devices, na aba da esquerda;
+    - Adicione um hardware com a configuração CA Signed e com o client name que o script gerou;
+    - Entre no DPS, do portal azure;
+        - Entre em certificados;
+        - Crie um certificado;
+            - Para validar o certificado, vá na pasta server_certs;
+            - Pegue o certificado RootCA.pem e insira, coloque o certificado para verificar;
+        - Vá em manage enrollments:
+            - Adicione uma matrícula individual;
+            - Em primary certificate, coloque o leaf_certificate.pem da pasta spiffs_certs;
+            - Em IotHub Device ID, adicione o nome que você pegou anteriormente;
+            - Salve;
+- Entre em Diagramas/DeviceTwin.json e copie o texto do arquivo;
+- Entre no DPS:
+    - Entre na sua matrícula individual;
+    - Coloque o texto copiado para a parte Initial Device Twin State;
+- Entre no Iothub, selecione seu dispositivo e entre na aba de DeviceTwin:
+    - Copie a seção desired do arquivo DeviceTwin.json para a mesma seção na página do Iothub;
+    - Modifique os campos de rede;
+- Configure o arquivo rede.txt:
+    - Coloque as seguintes strings (seguidos de "*", como separador):
+        - 10 + "\*" + SSID da rede para conectar + "\*" + Senha da rede para conectar + "\*" + o device common name pego anteriormente;
+    - O arquivo tem que ter o formato para wifi:
+        - 10\*SSID\*Senha\*Common name\*Id Scope\*
+    - Para GSM, o arquivo tem que ter o formato:
+        - 30\*Nome rede\*Senha Rede\*Usuario rede\*Common name\*Id Scope\*
+    - Caso queira colocar no modo estático, com x sendo 1 ou 2:
+        - x1\*SSID\*Senha\*Common name\*Id Scope\*/Ip/Gateway/Netmask/DNS
+- Compile com esses arquivos;
+# Usando um debugger
+- Nas opções do esp-idf, vá em "Panic handler behaviour";
+    - Selecione a opção Invoke GDBStub;
+    - Quando o dispositivo quebrar, o dispositivo irá invocar o gdb de maneira remota;
+- Para usar o GDB no Esp diretamente, execute o comando:
+    - C:\Users\ (Usuário) \\.espressif\tools\xtensa-esp32-elf\esp-2021r1-8.4.0\xtensa-esp32-elf\bin\xtensa-esp32-elf-gdb.exe (Pasta do projeto) \Esp32-Firmware-AccesCounter\build\esp_orion.elf -b 115200 -p (porta serial do Esp) 'target remote (porta serial do Esp)'
+# OTA
+- Para usar o OTA, envie um método direto pelo iothub com as configurações do json "MetodoDiretoOTA.json";
+# Configuração certificados e Storage Account
+- Crie um Storage Account na plataforma da azure;
+- Crie um blob storage;
+- Coloque a opção de poder acessar anonimamente a blob, mas não o container;
+- Gere o certificado para a empresa, usando o script config_cert.py;
+- Coloque o certificado e a chave (da pasta server_certs) em uma pasta mãe no fileshare;
+- Coloque os certificados filhos que você gerar pelo script config_cert.py em outra pasta;
+- Coloque o certificado na parte de certificados do DPS;
+- Crie um Enrollment Group no DPS para a empresa;
+- Crie um certificado filho geral para o gateway e adicione ao dps;
+- Envie um método direto (arquivo json na pasta diagramas) de atualização de certificado, com os links dos certificados específicos e chaves do gateway, também com o common name gerado pelo script;

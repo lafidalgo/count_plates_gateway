@@ -1,0 +1,29 @@
+@startuml
+autoactivate on
+Iniciar_ESP ->  Iniciar_ESP:Concluido
+Iniciar_ESP -> Execucao
+Execucao -> DeviceTwin:Habilita thread\nDeviceTwins
+note over DeviceTwin: Conecta ao iothub e recebe as desired properties,\natualiza a variavel interna e\nreporta de volta ao hub como esta a varivel interna.\nConexao fica aberta e verifica atualizacoes
+loop infinite times
+            DeviceTwin -> DeviceTwin: Verifica atualizacoes/\nExecuta atualizacoes
+        end
+Execucao -> Execucao: Espera 40s para garantir\no preenchimento\nda varivel de device twin
+Execucao -> Timers:Habilita thread\ndos timers
+loop infinite times
+            Timers -> Timers: Verifica stats conexao\na cada 30s
+        end
+Execucao -> Log_Geral:Habilita thread\nque escreve no log geral
+loop infinite times
+            Log_Geral->Log_Geral:Verifica disponibilidade\ndo semaforo de escrever\nna particao spiff
+            alt successful case
+            Log_Geral->Log_Geral:Retira uma mensagem da fila\ndo log geral e escreve na particao\nadequada. Rotacao entre 3 arquivos
+            else Semaforo ocupado 
+            Log_Geral->Log_Geral:Tenta novamente
+        end
+Execucao -> Log_Envios:Habilita thread\nque escreve no\nlog de envios
+note over Log_Envios:Se comporta\nigual a thread\ndo log geral
+Execucao -> Simula_batidas
+note over Simula_batidas: Como ainda nao tem\nas interrupcoes do sensor\nfoi criada uma thread\npra simular batidas\ne adiciona-las\na fila que escreve\nna memoria nao\nvolatil NVS
+Execucao -> EscreveBatidasNaNVS: Thread que \nescreve na memoria\nnao volatil NVS
+Execucao -> enviar_msg_iothub: Thread que\nle da memoria NVS\ne, com esses dados\nenvia uma mensagem\npara o iothub
+@enduml
