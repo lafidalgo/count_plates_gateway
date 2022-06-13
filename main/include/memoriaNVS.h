@@ -10,18 +10,13 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "Manipulacao_Arquivos.h"
-#include "accesCounter.h"
 
 #define TEMPO_ENVIO 2
-#define CMP_AB 3
-#define CMP_BA 4
-#define BATERIA 5
-#define OBSTRUCAO 6
-#define MSGS_PERDIDAS 7
-#define MSGS_REPETIDAS 8
-#define REINICIOS 9
-#define HEARTBEAT 10
-#define DIGITAL_TWIN 11
+#define TYPE 3
+#define WEIGHT 4
+#define QUANTITY 5
+#define VOLTAGE 6
+#define DIGITAL_TWIN 7
 
 SemaphoreHandle_t xSemaphoreAcessoSpiffs;
 StaticSemaphore_t xSemaphoreBufferAcessoNVS;
@@ -32,7 +27,6 @@ mensagem_backup_iothub *leitura_nvs_backup(int);
 int init_arquivos_csv(void);
 int escrita_mensagem_nao_enviada(mensagem_backup_iothub *, int);
 int escrita_historico_sensores(void);
-void leitura_nvs_historico(void);
 void reinicia_salva_historico(void);
 
 #endif

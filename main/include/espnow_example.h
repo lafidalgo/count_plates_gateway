@@ -7,6 +7,8 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
+#include "esp_now.h"
+
 #ifndef ESPNOW_EXAMPLE_H
 #define ESPNOW_EXAMPLE_H
 
@@ -22,6 +24,8 @@
 #define ESPNOW_QUEUE_SIZE 6
 
 #define IS_BROADCAST_ADDR(addr) (memcmp(addr, s_example_broadcast_mac, ESP_NOW_ETH_ALEN) == 0)
+
+void example_espnow_task(void *pvParameter);
 
 typedef enum
 {

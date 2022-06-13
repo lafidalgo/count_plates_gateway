@@ -45,14 +45,10 @@ typedef struct mensagem_envio_tag {
 } Mensagem_Envio_Iothub;
 
 typedef struct{
-    uint32_t batidas_a_b;
-    uint32_t batidas_b_a; 
-    uint8_t nivel_bateria;
-    uint8_t obstrucao;
-    int msgs_perdidas;
-    uint8_t msgs_repetidas;
-    uint16_t reinicios;
-    uint32_t heart_beat;
+    int type;
+    float weightGrams; 
+    float quantityUnits;
+    uint32_t batVoltage;
     char *digital_twin_id; 
     char *tempo_envio;
 } mensagem_backup_iothub;
@@ -72,7 +68,7 @@ int IothubMensagemFlag;
 int montar_mensagem_iothub(mensagem_backup_iothub *, int, int, char *);
 bool Enviar_Mensagem_Iothub(mensagem_backup_iothub *, int, int);
 bool iniciar_mensagem_recebida(void);
-bool adicionar_mensagem_recebida(char*, uint32_t, uint32_t, uint8_t, uint8_t, int, uint8_t, uint16_t, uint32_t, char*);
+bool adicionar_mensagem_recebida(char*, int, float, float, uint32_t);
 bool limpar_mensagens_recebidas(void);
 objeto_mensagem_ram *pegar_mensagens(void);
 

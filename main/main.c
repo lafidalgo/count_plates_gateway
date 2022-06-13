@@ -32,7 +32,7 @@
 #include "wifi_setup.h"
 #include "ethernet_setup.h"
 #include "pppos_client.h"
-#include "accesCounter.h"
+#include "espnow_example.h"
 // Variavel para os tipos de conexao
 // Novo comentario
 #define TAMANHO_CAMPOS_CFG          40
@@ -169,7 +169,6 @@ uint8_t Iniciar_Esp(void)
 
     ESP_LOGI(TAGinicializacao, "Filas de Log");
     ESP_LOGI(TAGinicializacao, "Verificando status da internet");
-    pins_init();
     // importante verifica o sstatus da internet antes de chamar IoTHub_Init, se nao houver conexao
     // a funcao fica presa em um loop tentando atualizar o horario com o servidor NTP
 
@@ -312,12 +311,6 @@ void app_main(void)
         erro_init = 1;
     }
 
-    if (xTaskCreatePinnedToCore(jdy_watchdog, "jdy_watchdog", 4096 * 2, NULL, 10, NULL, 0) != pdPASS)
-    {
-        ESP_LOGE(TAGtask, "JDY fail");
-        erro_init = 1;
-    }
-
     while(!device_connected)
     {
         verifica_rede();    // Tenta diferentes configs ate conectar
@@ -374,8 +367,6 @@ void app_main(void)
         ESP_LOGE(TAGtask, "Task timer fail");
         erro_init = 1;
     }
-    
-    uart_init();
 
     // task para enviar mensagens ao iothub
     if (xTaskCreatePinnedToCore(enviar_msg_iothub, "enviar_msg_iothub", 30384, NULL, 15, NULL, 1) != pdPASS)
@@ -385,13 +376,11 @@ void app_main(void)
     }
 
     //Create a task to handler UART event from ISR
-    if (xTaskCreatePinnedToCore(uart_event_task, "uart_event_task", 20480, NULL, configMAX_PRIORITIES-1, NULL, 0) != pdPASS)
+    if (xTaskCreatePinnedToCore(example_espnow_task, "example_espnow_task", 20480, NULL, configMAX_PRIORITIES-1, NULL, 0) != pdPASS)
     {
-        ESP_LOGE(TAGtask, "UART fail");
+        ESP_LOGE(TAGtask, "ESP NOW fail");
         erro_init = 1;
     }
-
-    ble_config();
 
     // if (xTaskCreatePinnedToCore(iniciar_simulador, "simulador", 10240, NULL, 5, NULL, 1) != pdPASS)
     // {

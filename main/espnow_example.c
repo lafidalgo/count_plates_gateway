@@ -30,6 +30,8 @@
 #include "esp_now.h"
 #include "esp_crc.h"
 #include "espnow_example.h"
+#include "macros.h"
+#include "memoriaNVS.h"
 
 #define ESPNOW_MAXDELAY 512
 #define ESPNOW_CHANNEL 1
@@ -152,7 +154,7 @@ void example_espnow_data_prepare(example_espnow_send_param_t *send_param, int ty
     buf->crc = esp_crc16_le(UINT16_MAX, (uint8_t const *)buf, send_param->len);
 }
 
-static void example_espnow_task(void *pvParameter)
+void example_espnow_task(void *pvParameter)
 {
     example_espnow_event_t evt;
     example_espnow_send_param_t *send_param;
@@ -166,6 +168,35 @@ static void example_espnow_task(void *pvParameter)
     float weightGrams = 0;
     float quantityUnits = 0;
     uint32_t batVoltage = 0;
+
+    initSensorsList();
+
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(ESPNOW_WIFI_MODE));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+#if CONFIG_ESPNOW_ENABLE_LONG_RANGE
+    ESP_ERROR_CHECK(esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR));
+#endif
+
+    s_example_espnow_queue = xQueueCreate(ESPNOW_QUEUE_SIZE, sizeof(example_espnow_event_t));
+    if (s_example_espnow_queue == NULL)
+    {
+        ESP_LOGE(TAG, "Create mutex fail");
+        return ESP_FAIL;
+    }
+
+    /* Initialize ESPNOW and register sending and receiving callback function. */
+    ESP_ERROR_CHECK(esp_now_init());
+    ESP_ERROR_CHECK(esp_now_register_send_cb(example_espnow_send_cb));
+    ESP_ERROR_CHECK(esp_now_register_recv_cb(example_espnow_recv_cb));
+
+    /* Set primary master key. */
+    ESP_ERROR_CHECK(esp_now_set_pmk((uint8_t *)ESPNOW_PMK));
 
     while (xQueueReceive(s_example_espnow_queue, &evt, portMAX_DELAY) == pdTRUE)
     {
@@ -258,6 +289,23 @@ static void example_espnow_task(void *pvParameter)
                 ESP_LOGI(TAG, "Received error data from: " MACSTR "", MAC2STR(recv_cb->mac_addr));
             }
 
+            if(deviceInList){
+                // Pegando tempo em que envia para o back-end
+                char *stringAgora = pegar_string_tempo_agora();
+                if (xSemaphoreTake(xSemaphoreAcessoInternet, (TickType_t)100) == pdTRUE)
+                {
+                    adicionar_mensagem_recebida(
+                        stringAgora,
+                        type,
+                        recv_weightGrams,
+                        recv_quantityUnits,
+                        recv_batVoltage
+                    );
+                    free(stringAgora);
+                    xSemaphoreGive(xSemaphoreAcessoInternet);
+                }
+            }
+
             /* Send ACK to the device */
             if (deviceInList)
             {
@@ -308,59 +356,10 @@ static void example_espnow_task(void *pvParameter)
     }
 }
 
-static esp_err_t example_espnow_init(void)
-{
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(ESPNOW_WIFI_MODE));
-    ESP_ERROR_CHECK(esp_wifi_start());
-
-#if CONFIG_ESPNOW_ENABLE_LONG_RANGE
-    ESP_ERROR_CHECK(esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR));
-#endif
-
-    s_example_espnow_queue = xQueueCreate(ESPNOW_QUEUE_SIZE, sizeof(example_espnow_event_t));
-    if (s_example_espnow_queue == NULL)
-    {
-        ESP_LOGE(TAG, "Create mutex fail");
-        return ESP_FAIL;
-    }
-
-    /* Initialize ESPNOW and register sending and receiving callback function. */
-    ESP_ERROR_CHECK(esp_now_init());
-    ESP_ERROR_CHECK(esp_now_register_send_cb(example_espnow_send_cb));
-    ESP_ERROR_CHECK(esp_now_register_recv_cb(example_espnow_recv_cb));
-
-    /* Set primary master key. */
-    ESP_ERROR_CHECK(esp_now_set_pmk((uint8_t *)ESPNOW_PMK));
-
-    xTaskCreate(example_espnow_task, "example_espnow_task", 2048, NULL, 4, NULL);
-
-    return ESP_OK;
-}
-
 static void example_espnow_deinit(example_espnow_send_param_t *send_param)
 {
     free(send_param->buffer);
     free(send_param);
     vSemaphoreDelete(s_example_espnow_queue);
     esp_now_deinit();
-}
-
-void app_main(void)
-{
-    // Initialize NVS
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
-
-    initSensorsList();
-    example_espnow_init();
 }

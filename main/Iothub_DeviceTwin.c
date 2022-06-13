@@ -2,8 +2,8 @@
 #include "pppos_client.h"
 #include <string.h>
 #include "macros.h"
-#include "accesCounter.h"
 #include "esp_task_wdt.h"
+#include "memoriaNVS.h"
 
 #define WIFI                        1
 #define ETHERNET                    2
@@ -1028,15 +1028,6 @@ void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE update_state, const unsigned ch
                 free(oldDevice->sensor);
                 oldDevice->sensor = NULL;
             }
-            
-            if(historico.historico_mensagens == NULL)
-            {
-                historico.historico_mensagens = malloc(sizeof(hist_mens)*newDevice->num_sensores);
-            }
-            else
-            {
-                historico.historico_mensagens = realloc(historico.historico_mensagens, sizeof(hist_mens)*newDevice->num_sensores);
-            }
 
             oldDevice->sensor = (SensorState *)malloc(sizeof(SensorState)*newDevice->num_sensores );
             for (contador = 0; contador < newDevice->num_sensores; contador++)
@@ -1070,15 +1061,6 @@ void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE update_state, const unsigned ch
                     }
                 }
 
-                historico.historico_mensagens[contador].old_saidas = 0;
-                historico.historico_mensagens[contador].old_entradas = 0;
-                historico.historico_mensagens[contador].obstrucao = 0;
-                historico.historico_mensagens[contador].msgs_perdidas = 0;
-                historico.historico_mensagens[contador].msgs_repetidas = 0;
-                historico.historico_mensagens[contador].erros_crc = 0;
-                historico.historico_mensagens[contador].reinicios = 0;
-                historico.historico_mensagens[contador].heart_beat = 0;
-
             }                                     // end for escrita de sensors
             xSemaphoreGive(xSemaphoreDeviceTwin); // libera acesso a variavel
         }                                         // end if semaforo
@@ -1093,7 +1075,6 @@ void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE update_state, const unsigned ch
         // troca_parametros_rede();
 
         escreve_configuracao_rede_em_memoria();
-        leitura_nvs_historico();
     } // end device != null
     else
     {

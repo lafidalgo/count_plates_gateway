@@ -147,19 +147,12 @@ int montar_mensagem_iothub(
 
     for (int i = init; i < end; i++)
     {
-        bateria = (float)chamadas_perdidas_backup[i].nivel_bateria/10;
-
-        sprintf(array_json, "{\"published\":\"%s\",\"countAToB\":%d,\"countBToA\":%d,\"batVoltage\":%.1f,\"isBlocked\":%d,\"dtId\":\"%s\",\"MissedMessages\":%d,\"RepeatedMessages\":%d,\"reboots\":%d,\"heartBeats\":%d}",
+        sprintf(array_json, "{\"published\":\"%s\",\"type\":%d,\"weightGrams\":%.2f,\"quantityUnits\":%.2f,\"batVoltage\":%d}",
             chamadas_perdidas_backup[i].tempo_envio,
-            chamadas_perdidas_backup[i].batidas_a_b,
-            chamadas_perdidas_backup[i].batidas_b_a,
-            bateria,
-            chamadas_perdidas_backup[i].obstrucao,
-            chamadas_perdidas_backup[i].digital_twin_id,
-            chamadas_perdidas_backup[i].msgs_perdidas,
-            chamadas_perdidas_backup[i].msgs_repetidas,
-            chamadas_perdidas_backup[i].reinicios,
-            chamadas_perdidas_backup[i].heart_beat
+            chamadas_perdidas_backup[i].type,
+            chamadas_perdidas_backup[i].weightGrams,
+            chamadas_perdidas_backup[i].quantityUnits,
+            chamadas_perdidas_backup[i].batVoltage
         );
 
         if (i != end-1)
@@ -310,24 +303,18 @@ bool iniciar_mensagem_recebida(void)
     return true;
 }
 
-bool adicionar_mensagem_recebida(char *tempo, uint32_t batidas_a_b, uint32_t batidas_b_a, uint8_t nivel_bateria, uint8_t obstrucao, int msgs_perdidas, uint8_t msgs_repetidas, uint16_t reinicios, uint32_t heart_beat, char *digital_twin_id)
+bool adicionar_mensagem_recebida(char *tempo, int type, float weightGrams, float quantityUnits, uint32_t batVoltage)
 {
     mensagem_ram->mensagens_recebidas = (mensagem_backup_iothub *)realloc(mensagem_ram->mensagens_recebidas, sizeof(mensagem_backup_iothub) * (mensagem_ram->quantidade + 1) );
 
     mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].tempo_envio = (char *)malloc( (strlen(tempo) + 1) * sizeof(char));
-    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].digital_twin_id = (char *)malloc( (strlen(digital_twin_id) + 1) * sizeof(char));
 
-    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].batidas_a_b = batidas_a_b;
-    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].batidas_b_a = batidas_b_a;
-    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].nivel_bateria = nivel_bateria;
-    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].obstrucao = obstrucao;
-    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].msgs_perdidas = msgs_perdidas;
-    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].msgs_repetidas = msgs_repetidas;
-    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].reinicios = reinicios;
-    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].heart_beat = heart_beat;
+    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].type = type;
+    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].weightGrams = weightGrams;
+    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].quantityUnits = quantityUnits;
+    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].batVoltage = batVoltage;
 
     strcpy(mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].tempo_envio, tempo);
-    strcpy(mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].digital_twin_id, digital_twin_id);
 
     mensagem_ram->quantidade++;
 
