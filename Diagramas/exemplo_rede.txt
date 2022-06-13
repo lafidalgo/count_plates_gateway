@@ -1,1 +1,0 @@
-10*ssid*senha*(opcional)usuario gsm*common name certificado*id scope dps*
