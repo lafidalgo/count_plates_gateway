@@ -87,9 +87,6 @@ typedef struct myDevice_TAG
     char *versao_firmware;
     char *data_update_firmware;
     char *chave_update_firmware;
-    char *ble_address_gateway;
-    uint32_t baud_rate_gateway;
-    char *net_id_gateway;
     int num_sensores;
     SensorState *sensor; // desired
     char *ota_update_status;

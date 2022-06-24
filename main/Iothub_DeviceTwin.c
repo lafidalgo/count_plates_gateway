@@ -58,9 +58,6 @@ char *serializeToJson(Device *device)
     cJSON_AddStringToObject(root_object, "chave_update_firmware", device->versao_firmware);
     cJSON_AddStringToObject(root_object, "ota_update_status", device->ota_update_status);
     cJSON_AddNumberToObject(root_object, "num_sensores", device->num_sensores);
-    cJSON_AddNumberToObject(root_object, "baud_rate_gateway", device->baud_rate_gateway);
-    cJSON_AddStringToObject(root_object, "ble_address_gateway", device->ble_address_gateway);
-    cJSON_AddStringToObject(root_object, "net_id_gateway", device->net_id_gateway);
 
     cJSON_AddItemToObject(root_object, "quantidade_resets", crash_object = cJSON_CreateObject());
     cJSON_AddNumberToObject(crash_object, "crash", reset_status.crash);
@@ -120,7 +117,6 @@ Device *parseFromJson(const char *json, DEVICE_TWIN_UPDATE_STATE update_state)
 
         // Only desired properties:
         int num_sensores;
-        uint32_t baud_rate;
         char *tipo_conexao = (char *)malloc(sizeof(char) * TAMANHO_MENSAGEM);
         char *versao_firmware = (char *)malloc(sizeof(char) * TAMANHO_MENSAGEM);
         char *data_update_firmware = (char *)malloc(sizeof(char) * TAMANHO_MENSAGEM);
@@ -133,8 +129,6 @@ Device *parseFromJson(const char *json, DEVICE_TWIN_UPDATE_STATE update_state)
         char *ssid = (char *)malloc(sizeof(char) * TAMANHO_MENSAGEM);
         char *senha = (char *)malloc(sizeof(char) * TAMANHO_MENSAGEM);
         char *usuario_gsm = (char *)malloc(sizeof(char) * TAMANHO_MENSAGEM);
-        char *gateway_address = (char *)malloc(sizeof(char) * TAMANHO_MENSAGEM);
-        char *net_id_gateway = (char *)malloc(sizeof(char) * TAMANHO_MENSAGEM);
 
         if (update_state == DEVICE_TWIN_UPDATE_COMPLETE)
         {
@@ -145,14 +139,11 @@ Device *parseFromJson(const char *json, DEVICE_TWIN_UPDATE_STATE update_state)
             read_object = root_object;
         }
 
-        sprintf(gateway_address, cJSON_GetObjectItem(read_object, "ble_address_gateway")->valuestring);
         sprintf(tipo_conexao, cJSON_GetObjectItem(read_object, "tipo_conexao")->valuestring);
         sprintf(versao_firmware, cJSON_GetObjectItem(read_object, "versao_firmware")->valuestring);
         sprintf(data_update_firmware, cJSON_GetObjectItem(read_object, "data_update_firmware")->valuestring);
         sprintf(chave_update_firmware, cJSON_GetObjectItem(read_object, "chave_update_firmware")->valuestring);
-        sprintf(net_id_gateway, cJSON_GetObjectItem(read_object, "net_id_gateway")->valuestring);
         num_sensores = cJSON_GetObjectItem(read_object, "num_sensores")->valueint;
-        baud_rate = cJSON_GetObjectItem(read_object, "baud_rate_gateway")->valueint;
 
         cJSON *reset_object = cJSON_GetObjectItem(read_object, "quantidade_resets");
         reset_status.crash = cJSON_GetObjectItem(reset_object, "crash")->valueint;
@@ -171,25 +162,6 @@ Device *parseFromJson(const char *json, DEVICE_TWIN_UPDATE_STATE update_state)
         sprintf(usuario_gsm, cJSON_GetObjectItem(rede_object, "usuario_gsm")->valuestring);
 
         device->num_sensores = num_sensores;
-        device->baud_rate_gateway = baud_rate;
-
-        if (gateway_address != NULL)
-        {
-            device->ble_address_gateway = (char *)malloc(1 + strlen(gateway_address));
-            if (NULL != device->ble_address_gateway)
-            {
-                (void)strcpy(device->ble_address_gateway, gateway_address);
-            }
-        }
-
-        if (net_id_gateway != NULL)
-        {
-            device->net_id_gateway = (char *)malloc(1 + strlen(net_id_gateway));
-            if (NULL != device->net_id_gateway)
-            {
-                (void)strcpy(device->net_id_gateway, net_id_gateway);
-            }
-        }
 
         if (tipo_conexao != NULL)
         {
@@ -355,9 +327,7 @@ Device *parseFromJson(const char *json, DEVICE_TWIN_UPDATE_STATE update_state)
         free(netmask);
         free(ssid);
         free(senha);
-        free(gateway_address);
         free(usuario_gsm);
-        free(net_id_gateway);
         // ####################################################################################################################
 
         cJSON_Delete(root_object);
@@ -720,44 +690,6 @@ void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE update_state, const unsigned ch
                 }
             }
 
-            if (newDevice->net_id_gateway != NULL)
-            {
-                if ((oldDevice->net_id_gateway != NULL) && (strcmp(oldDevice->net_id_gateway, newDevice->net_id_gateway) != 0))
-                {
-                    free(oldDevice->net_id_gateway);
-                    oldDevice->net_id_gateway = NULL;
-                }
-
-                if (oldDevice->net_id_gateway == NULL)
-                {
-                    printf("Received a new net_id_gateway = %s\n", newDevice->net_id_gateway);
-                    if (NULL != (oldDevice->net_id_gateway = malloc(strlen(newDevice->net_id_gateway) + 1)))
-                    {
-                        (void)strcpy(oldDevice->net_id_gateway, newDevice->net_id_gateway);
-                        free(newDevice->net_id_gateway);
-                    }
-                }
-            }
-
-            if (newDevice->ble_address_gateway != NULL)
-            {
-                if ((oldDevice->ble_address_gateway != NULL) && (!is_str_equal(oldDevice->ble_address_gateway, newDevice->ble_address_gateway)))
-                {
-                    free(oldDevice->ble_address_gateway);
-                    oldDevice->ble_address_gateway = NULL;
-                }
-
-                if (oldDevice->ble_address_gateway == NULL)
-                {
-                    printf("Received a new ble_address_gateway = %s\n", newDevice->ble_address_gateway);
-                    if (NULL != (oldDevice->ble_address_gateway = malloc(strlen(newDevice->ble_address_gateway) + 1)))
-                    {
-                        (void)strcpy(oldDevice->ble_address_gateway, newDevice->ble_address_gateway);
-                        free(newDevice->ble_address_gateway);
-                    }
-                }
-            }
-
             if (newDevice->tipo_conexao != NULL)
             {
                 if ((oldDevice->tipo_conexao != NULL) && (strcmp(oldDevice->tipo_conexao, newDevice->tipo_conexao) != 0))
@@ -1026,16 +958,6 @@ void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE update_state, const unsigned ch
             {
                 vTaskDelay(750 / portTICK_PERIOD_MS);
                 esp_restart();
-            }
-
-            if (newDevice->baud_rate_gateway != 0)
-            {
-                /* Aqui pode ser alterada a variavel global para o timer de envio de mensagens ao hub */
-                if (newDevice->baud_rate_gateway != oldDevice->baud_rate_gateway)
-                {
-                    printf("Received a new desired baud rate = %d\n", newDevice->baud_rate_gateway);
-                    oldDevice->baud_rate_gateway = newDevice->baud_rate_gateway;
-                }
             }
 
             int contador;
