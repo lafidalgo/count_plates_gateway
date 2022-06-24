@@ -36,14 +36,6 @@
 
 #define ESPNOW_MAXDELAY 512
 #define ESPNOW_PMK "pmk1234567890123"
-#define SENSORS_LIST_MAX 20
-
-typedef struct SensorsList_t
-{
-    char deviceMACAddress[18];
-} SensorsList_t;
-
-SensorsList_t SensorsList[SENSORS_LIST_MAX];
 
 static int SensorsListLastIndex = 0;
 
@@ -54,12 +46,6 @@ static xQueueHandle s_example_espnow_queue;
 static uint8_t s_example_broadcast_mac[ESP_NOW_ETH_ALEN] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 static void example_espnow_deinit(example_espnow_send_param_t *send_param);
-
-void initSensorsList(void)
-{
-    sprintf(SensorsList[SensorsListLastIndex].deviceMACAddress, "%s", "30:c6:f7:03:86:b5");
-    SensorsListLastIndex++;
-}
 
 /* ESPNOW sending or receiving callback function is called in WiFi task.
  * Users should not do lengthy operations from this task. Instead, post
@@ -141,12 +127,14 @@ int example_espnow_data_parse(uint8_t *data, uint16_t data_len, uint8_t *state, 
 }
 
 /* Prepare ESPNOW data to be sent. */
-void example_espnow_data_prepare(example_espnow_send_param_t *send_param, int type, float weightGrams, float quantityUnits, uint32_t batVoltage)
+void example_espnow_data_prepare(example_espnow_send_param_t *send_param, int type, int index, float weightGrams, float quantityUnits, uint32_t batVoltage)
 {
     example_espnow_data_t *buf = (example_espnow_data_t *)send_param->buffer;
 
     buf->type = type;
     buf->crc = 0;
+
+    ESP_LOGI(TAG, "Weight Reference: %d", deviceTwinTempoExecucao->sensor[index].weightReference);
 
     buf->weightGrams = weightGrams;
     buf->quantityUnits = quantityUnits;
@@ -170,8 +158,6 @@ void example_espnow_task(void *pvParameter)
     float weightGrams = 0;
     float quantityUnits = 0;
     uint32_t batVoltage = 0;
-
-    initSensorsList();
 
     /*ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -217,15 +203,16 @@ void example_espnow_task(void *pvParameter)
             example_espnow_event_recv_cb_t *recv_cb = &evt.info.recv_cb;
             bool deviceInList = false;
             char macAddress[18];
+            int index = 0;
 
             ret = example_espnow_data_parse(recv_cb->data, recv_cb->data_len, &recv_state, &recv_magic, &recv_wifi_channel, &recv_weightGrams, &recv_quantityUnits, &recv_batVoltage);
             free(recv_cb->data);
 
             /* Check if device is in sensor list */
-            for (int index = 0; index < SENSORS_LIST_MAX; index++)
+            for (index = 0; index < deviceTwinTempoExecucao->num_sensores; index++)
             {
                 sprintf(macAddress, MACSTR, MAC2STR(recv_cb->mac_addr));
-                if (strcmp(SensorsList[index].deviceMACAddress, macAddress) == 0)
+                if (strcmp(deviceTwinTempoExecucao->sensor[index].macAddress, macAddress) == 0)
                 {
                     deviceInList = true;
 
@@ -335,7 +322,7 @@ void example_espnow_task(void *pvParameter)
 
                 /* Start sending unicast ESPNOW data. */
                 memcpy(send_param->dest_mac, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
-                example_espnow_data_prepare(send_param, type, weightGrams, quantityUnits, batVoltage);
+                example_espnow_data_prepare(send_param, type, index, weightGrams, quantityUnits, batVoltage);
                 // ESP_LOGI(TAG, "Send data to " MACSTR "", MAC2STR(recv_cb->mac_addr));
                 if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK)
                 {
