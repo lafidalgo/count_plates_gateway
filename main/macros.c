@@ -11,22 +11,22 @@ int len;
 
 int is_str_equal(char *str1, char *str2)
 {
-    if ( NULL == str1 && NULL == str2 )
+    if (NULL == str1 && NULL == str2)
     {
         ESP_LOGE("MACROS", "AMBAS AS STRINGS SAO NULAS");
         return 0;
-    } 
-    else if ( NULL == str1 )
+    }
+    else if (NULL == str1)
     {
         ESP_LOGE("MACROS", "A PRIMEIRA STRING É NULA E O VALOR DA SEGUNDA É %s\n", str2);
         return 0;
     }
-    else if ( NULL == str2 )
+    else if (NULL == str2)
     {
         ESP_LOGE("MACROS", "A SEGUNDA STRING É NULA E O VALOR DA PRIMEIRA É %s\n", str1);
         return 0;
     }
-    else if ( 0 == strcmp(str1,str2) )
+    else if (0 == strcmp(str1, str2))
     {
         return 1;
     }
@@ -38,12 +38,12 @@ int is_str_equal(char *str1, char *str2)
 
 int is_str_true(char *str)
 {
-    if ( NULL == str )
+    if (NULL == str)
     {
         ESP_LOGE("MACROS", "A STRING É NULA");
         return 0;
     }
-    else if ( 0 == strcmp(str,"true") || 0 == strcmp(str,"True") )
+    else if (0 == strcmp(str, "true") || 0 == strcmp(str, "True"))
     {
         return 1;
     }
@@ -60,7 +60,7 @@ int is_str_false(char *str)
         ESP_LOGI("MACROS", "A STRING É NULA");
         return 0;
     }
-    else if ( 0 == strcmp(str,"false") || 0 == strcmp(str,"False") )
+    else if (0 == strcmp(str, "false") || 0 == strcmp(str, "False"))
     {
         return 1;
     }
@@ -77,7 +77,7 @@ int is_str_bool(char *str)
         ESP_LOGI("MACROS", "A STRING É NULA");
         return 0;
     }
-    else if ( is_str_false(str) || is_str_true(str) )
+    else if (is_str_false(str) || is_str_true(str))
     {
         return 1;
     }
@@ -90,8 +90,8 @@ int is_str_bool(char *str)
 int are_float_equal(float flt1, float flt2)
 {
     float epsilon = 0.001;
-    float faixa_sup = flt1 + (flt1*epsilon);
-    float faixa_inf = flt1 - (flt1*epsilon);
+    float faixa_sup = flt1 + (flt1 * epsilon);
+    float faixa_inf = flt1 - (flt1 * epsilon);
 
     if (flt2 >= faixa_inf && flt2 <= faixa_sup)
     {
@@ -107,8 +107,8 @@ char[8] get_string_address(int *address)
 {
     char[8] address_string;
 
-    sprint(address_string, "%02X%02X%02X%02X", 
-        (int)address[0], 
+    sprint(address_string, "%02X%02X%02X%02X",
+        (int)address[0],
         (int)address[1],
         (int)address[2],
         (int)address[3]
@@ -129,7 +129,7 @@ uint16_t get_bytes_address(char *address)
     return address_bytes;
 }
 
-char* hex_to_string(char *hex)
+char *hex_to_string(char *hex)
 {
     int *num = (int *)strtol(hex, NULL, 16);
     char *string = "";
@@ -139,7 +139,7 @@ char* hex_to_string(char *hex)
     return string;
 }
 
-int achar_indice_sensor_por_endereco(uint16_t bleMeshAddr)
+/*int achar_indice_sensor_por_endereco(uint16_t bleMeshAddr)
 {
     for (int j = 0; j < deviceTwinTempoExecucao->num_sensores; j++)
     {
@@ -149,27 +149,32 @@ int achar_indice_sensor_por_endereco(uint16_t bleMeshAddr)
         }
     }
     return -1;
-}
+}*/
 
 FILE *abrir_arquivo_e_montar_particao(char *path, char *partition, char *type)
 {
     esp_vfs_spiffs_conf_t conf = {
-      .base_path = "/spiffs",
-      .partition_label = partition,
-      .max_files = 7,
-      .format_if_mount_failed = true
-    };
-    
+        .base_path = "/spiffs",
+        .partition_label = partition,
+        .max_files = 7,
+        .format_if_mount_failed = true};
+
     // Use settings defined above to initialize and mount SPIFFS filesystem.
     // Note: esp_vfs_spiffs_register is an all-in-one convenience function.
     esp_err_t ret = esp_vfs_spiffs_register(&conf);
 
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) {
+    if (ret != ESP_OK)
+    {
+        if (ret == ESP_FAIL)
+        {
             ESP_LOGE("Spiffs", "Failed to mount or format filesystem");
-        } else if (ret == ESP_ERR_NOT_FOUND) {
+        }
+        else if (ret == ESP_ERR_NOT_FOUND)
+        {
             ESP_LOGE("Spiffs", "Failed to find SPIFFS partition");
-        } else {
+        }
+        else
+        {
             ESP_LOGE("Spiffs", "Failed to initialize SPIFFS %s (%s)", partition, esp_err_to_name(ret));
         }
         return NULL;
@@ -183,22 +188,27 @@ FILE *abrir_arquivo_e_montar_particao(char *path, char *partition, char *type)
 int montar_particao(char *partition)
 {
     esp_vfs_spiffs_conf_t conf = {
-      .base_path = "/spiffs",
-      .partition_label = partition,
-      .max_files = 7,
-      .format_if_mount_failed = true
-    };
-    
+        .base_path = "/spiffs",
+        .partition_label = partition,
+        .max_files = 7,
+        .format_if_mount_failed = true};
+
     // Use settings defined above to initialize and mount SPIFFS filesystem.
     // Note: esp_vfs_spiffs_register is an all-in-one convenience function.
     esp_err_t ret = esp_vfs_spiffs_register(&conf);
 
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) {
+    if (ret != ESP_OK)
+    {
+        if (ret == ESP_FAIL)
+        {
             ESP_LOGE("Spiffs", "Failed to mount or format filesystem");
-        } else if (ret == ESP_ERR_NOT_FOUND) {
+        }
+        else if (ret == ESP_ERR_NOT_FOUND)
+        {
             ESP_LOGE("Spiffs", "Failed to find SPIFFS partition");
-        } else {
+        }
+        else
+        {
             ESP_LOGE("Spiffs", "Failed to initialize SPIFFS %s (%s)", partition, esp_err_to_name(ret));
         }
         return 0;
@@ -239,7 +249,7 @@ char *parse_field(char *string, int campo, const char *sinalizador)
 
     char *result_string = strtok(string_to_parse, sinalizador);
 
-    while ( result_string != NULL )
+    while (result_string != NULL)
     {
         if (!--campo)
         {
@@ -310,23 +320,20 @@ reset_reasons pegar_motivo_crash(reset_reasons crash_reasons)
     if (
         reason == ESP_RST_SW ||
         reason == ESP_RST_EXT ||
-        reason == ESP_RST_SDIO
-    )
+        reason == ESP_RST_SDIO)
     {
         crash_reasons.software++;
     }
     else if (
         reason == ESP_RST_POWERON ||
-        reason == ESP_RST_DEEPSLEEP
-    )
+        reason == ESP_RST_DEEPSLEEP)
     {
         crash_reasons.inicioNormal++;
     }
     else if (
         reason == ESP_RST_PANIC ||
         reason == ESP_RST_UNKNOWN ||
-        reason == ESP_RST_BROWNOUT
-    )
+        reason == ESP_RST_BROWNOUT)
     {
         crash_reasons.crash++;
     }
@@ -334,65 +341,65 @@ reset_reasons pegar_motivo_crash(reset_reasons crash_reasons)
     {
         crash_reasons.watchdog++;
     }
-    
+
     return crash_reasons;
 }
 
 esp_err_t _http_event_handle_download(esp_http_client_event_t *evt)
 {
-    switch(evt->event_id) 
+    switch (evt->event_id)
     {
-        case HTTP_EVENT_ERROR:
-        {
-            ESP_LOGI("Download", "HTTP_EVENT_ERROR");
-            return ESP_FAIL;
-        }
-        break;
+    case HTTP_EVENT_ERROR:
+    {
+        ESP_LOGI("Download", "HTTP_EVENT_ERROR");
+        return ESP_FAIL;
+    }
+    break;
 
-        case HTTP_EVENT_ON_CONNECTED:
-        {
-            //ESP_LOGI("Download", "HTTP_EVENT_ON_CONNECTED");
-        }
-        break;
+    case HTTP_EVENT_ON_CONNECTED:
+    {
+        // ESP_LOGI("Download", "HTTP_EVENT_ON_CONNECTED");
+    }
+    break;
 
-        case HTTP_EVENT_HEADER_SENT:
-        {
-            //ESP_LOGI("Download", "HTTP_EVENT_HEADER_SENT");
-        }
-        break;
+    case HTTP_EVENT_HEADER_SENT:
+    {
+        // ESP_LOGI("Download", "HTTP_EVENT_HEADER_SENT");
+    }
+    break;
 
-        case HTTP_EVENT_ON_HEADER:
-        {
-            //ESP_LOGI("Download", "HTTP_EVENT_ON_HEADER");
-        }
-        break;
+    case HTTP_EVENT_ON_HEADER:
+    {
+        // ESP_LOGI("Download", "HTTP_EVENT_ON_HEADER");
+    }
+    break;
 
-        case HTTP_EVENT_ON_DATA:
-        {
-            //ESP_LOGI("Download", "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
-            memcpy(arquivo_buffer + len, (char *)evt->data, evt->data_len);
-            len += evt->data_len;
-        }
-        break;
+    case HTTP_EVENT_ON_DATA:
+    {
+        // ESP_LOGI("Download", "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
+        memcpy(arquivo_buffer + len, (char *)evt->data, evt->data_len);
+        len += evt->data_len;
+    }
+    break;
 
-        case HTTP_EVENT_ON_FINISH:
-        {
-            //ESP_LOGI("Download", "HTTP_EVENT_ON_FINISH");
-        }
-        break;
+    case HTTP_EVENT_ON_FINISH:
+    {
+        // ESP_LOGI("Download", "HTTP_EVENT_ON_FINISH");
+    }
+    break;
 
-        case HTTP_EVENT_DISCONNECTED:
-        {
-            //ESP_LOGI("Download", "HTTP_EVENT_DISCONNECTED");
-        }
-        break;
+    case HTTP_EVENT_DISCONNECTED:
+    {
+        // ESP_LOGI("Download", "HTTP_EVENT_DISCONNECTED");
+    }
+    break;
     }
     return ESP_OK;
 }
 
 char *baixar_arquivo(char *url)
 {
-    arquivo_buffer = (char *)calloc( BUFFER_CERT, sizeof(char) );
+    arquivo_buffer = (char *)calloc(BUFFER_CERT, sizeof(char));
     esp_err_t err;
     esp_http_client_config_t config = {
         .url = url,
@@ -421,7 +428,7 @@ char *baixar_arquivo(char *url)
     esp_http_client_cleanup(client);
 
     arquivo_buffer[len + 1] = '\0';
-    char *arquivo_baixado = (char *)calloc( len + 1, sizeof(char) );
+    char *arquivo_baixado = (char *)calloc(len + 1, sizeof(char));
     sprintf(arquivo_baixado, "%s", arquivo_buffer);
     free(arquivo_buffer);
 

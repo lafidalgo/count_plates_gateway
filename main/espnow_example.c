@@ -32,6 +32,7 @@
 #include "espnow_example.h"
 #include "macros.h"
 #include "memoriaNVS.h"
+#include "Iothub_DeviceTwin.h"
 
 #define ESPNOW_MAXDELAY 512
 #define ESPNOW_PMK "pmk1234567890123"

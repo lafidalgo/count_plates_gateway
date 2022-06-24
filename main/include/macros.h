@@ -53,7 +53,7 @@ int is_str_equal(char *, char *);
 int is_str_true(char *);
 int is_str_false(char *);
 int is_str_bool(char *);
-int achar_indice_sensor_por_endereco(uint16_t);
+//int achar_indice_sensor_por_endereco(uint16_t);
 int are_float_equal(float, float);
 int escrever_arquivo(char *, FILE *);
 char *parse_field(char *, int, const char *);
