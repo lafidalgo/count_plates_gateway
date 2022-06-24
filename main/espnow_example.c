@@ -37,13 +37,9 @@
 #define ESPNOW_MAXDELAY 512
 #define ESPNOW_PMK "pmk1234567890123"
 
-static int SensorsListLastIndex = 0;
-
 static const char *TAG = "espnow_example";
 
 static xQueueHandle s_example_espnow_queue;
-
-static uint8_t s_example_broadcast_mac[ESP_NOW_ETH_ALEN] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 static void example_espnow_deinit(example_espnow_send_param_t *send_param);
 
@@ -127,18 +123,18 @@ int example_espnow_data_parse(uint8_t *data, uint16_t data_len, uint8_t *state, 
 }
 
 /* Prepare ESPNOW data to be sent. */
-void example_espnow_data_prepare(example_espnow_send_param_t *send_param, int type, int index, float weightGrams, float quantityUnits, uint32_t batVoltage)
+void example_espnow_data_prepare(example_espnow_send_param_t *send_param, int type, int index)
 {
     example_espnow_data_t *buf = (example_espnow_data_t *)send_param->buffer;
 
     buf->type = type;
     buf->crc = 0;
 
-    ESP_LOGI(TAG, "Weight Reference: %d", deviceTwinTempoExecucao->sensor[index].weightReference);
+    buf->weightGrams = 0;
+    buf->quantityUnits = 0;
+    buf->batVoltage = 0;
 
-    buf->weightGrams = weightGrams;
-    buf->quantityUnits = quantityUnits;
-    buf->batVoltage = batVoltage;
+    ESP_LOGI(TAG, "Weight Reference: %d", deviceTwinTempoExecucao->sensor[index].weightReference);
 
     buf->crc = esp_crc16_le(UINT16_MAX, (uint8_t const *)buf, send_param->len);
 }
@@ -155,9 +151,6 @@ void example_espnow_task(void *pvParameter)
     uint32_t recv_batVoltage = 0;
     int ret;
     int type = 0;
-    float weightGrams = 0;
-    float quantityUnits = 0;
-    uint32_t batVoltage = 0;
 
     /*ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -246,32 +239,19 @@ void example_espnow_task(void *pvParameter)
 
             if (ret == EXAMPLE_ESPNOW_DATA_SEND)
             {
-
                 ESP_LOGI(TAG, "Received send data from: " MACSTR ", len: %d, channel: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_wifi_channel, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
-
                 type = EXAMPLE_ESPNOW_DATA_SEND;
-                weightGrams = 123.1;
-                quantityUnits = 132.1;
-                batVoltage = 123;
             }
             else if (ret == EXAMPLE_ESPNOW_DATA_HEARTBEAT)
             {
                 ESP_LOGI(TAG, "Received heartbeat data from: " MACSTR ", len: %d, channel: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_wifi_channel, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
-
                 type = EXAMPLE_ESPNOW_DATA_HEARTBEAT;
-                weightGrams = 123.1;
-                quantityUnits = 132.1;
-                batVoltage = 123;
             }
             else if (ret == EXAMPLE_ESPNOW_DATA_RESET)
             {
                 bool deviceInList = false;
                 ESP_LOGI(TAG, "Received reset data from: " MACSTR ", len: %d, channel: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_wifi_channel, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
-
                 type = EXAMPLE_ESPNOW_DATA_RESET;
-                weightGrams = 123.1;
-                quantityUnits = 132.1;
-                batVoltage = 123;
             }
             else
             {
@@ -322,7 +302,7 @@ void example_espnow_task(void *pvParameter)
 
                 /* Start sending unicast ESPNOW data. */
                 memcpy(send_param->dest_mac, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
-                example_espnow_data_prepare(send_param, type, index, weightGrams, quantityUnits, batVoltage);
+                example_espnow_data_prepare(send_param, type, index);
                 // ESP_LOGI(TAG, "Send data to " MACSTR "", MAC2STR(recv_cb->mac_addr));
                 if (esp_now_send(send_param->dest_mac, send_param->buffer, send_param->len) != ESP_OK)
                 {
