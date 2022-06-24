@@ -134,7 +134,7 @@ void example_espnow_data_prepare(example_espnow_send_param_t *send_param, int ty
     buf->quantityUnits = 0;
     buf->batVoltage = 0;
 
-    ESP_LOGI(TAG, "Weight Reference: %d", deviceTwinTempoExecucao->sensor[index].weightReference);
+    buf->weightReference = deviceTwinTempoExecucao->sensor[index].weightReference;
 
     buf->crc = esp_crc16_le(UINT16_MAX, (uint8_t const *)buf, send_param->len);
 }
