@@ -34,7 +34,6 @@
 #include "memoriaNVS.h"
 
 #define ESPNOW_MAXDELAY 512
-#define ESPNOW_CHANNEL 1
 #define ESPNOW_PMK "pmk1234567890123"
 #define SENSORS_LIST_MAX 20
 
@@ -113,7 +112,7 @@ static void example_espnow_recv_cb(const uint8_t *mac_addr, const uint8_t *data,
 }
 
 /* Parse received ESPNOW data. */
-int example_espnow_data_parse(uint8_t *data, uint16_t data_len, uint8_t *state, int *magic, float *weightGrams, float *quantityUnits, uint32_t *batVoltage)
+int example_espnow_data_parse(uint8_t *data, uint16_t data_len, uint8_t *state, int *magic, uint8_t *wifi_channel, float *weightGrams, float *quantityUnits, uint32_t *batVoltage)
 {
     example_espnow_data_t *buf = (example_espnow_data_t *)data;
     uint16_t crc, crc_cal = 0;
@@ -124,6 +123,7 @@ int example_espnow_data_parse(uint8_t *data, uint16_t data_len, uint8_t *state, 
         return -1;
     }
 
+    *wifi_channel = buf->wifi_channel;
     *weightGrams = buf->weightGrams;
     *quantityUnits = buf->quantityUnits;
     *batVoltage = buf->batVoltage;
@@ -160,6 +160,7 @@ void example_espnow_task(void *pvParameter)
     example_espnow_send_param_t *send_param;
     uint8_t recv_state = 0;
     int recv_magic = 0;
+    uint8_t recv_wifi_channel = 1;
     float recv_weightGrams = 0;
     float recv_quantityUnits = 0;
     uint32_t recv_batVoltage = 0;
@@ -171,13 +172,13 @@ void example_espnow_task(void *pvParameter)
 
     initSensorsList();
 
-    ESP_ERROR_CHECK(esp_netif_init());
+    /*ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
     ESP_ERROR_CHECK(esp_wifi_set_mode(ESPNOW_WIFI_MODE));
-    ESP_ERROR_CHECK(esp_wifi_start());
+    ESP_ERROR_CHECK(esp_wifi_start());*/
 
 #if CONFIG_ESPNOW_ENABLE_LONG_RANGE
     ESP_ERROR_CHECK(esp_wifi_set_protocol(ESPNOW_WIFI_IF, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR));
@@ -214,14 +215,14 @@ void example_espnow_task(void *pvParameter)
         {
             example_espnow_event_recv_cb_t *recv_cb = &evt.info.recv_cb;
             bool deviceInList = false;
+            char macAddress[18];
 
-            ret = example_espnow_data_parse(recv_cb->data, recv_cb->data_len, &recv_state, &recv_magic, &recv_weightGrams, &recv_quantityUnits, &recv_batVoltage);
+            ret = example_espnow_data_parse(recv_cb->data, recv_cb->data_len, &recv_state, &recv_magic, &recv_wifi_channel, &recv_weightGrams, &recv_quantityUnits, &recv_batVoltage);
             free(recv_cb->data);
 
             /* Check if device is in sensor list */
             for (int index = 0; index < SENSORS_LIST_MAX; index++)
             {
-                char macAddress[18];
                 sprintf(macAddress, MACSTR, MAC2STR(recv_cb->mac_addr));
                 if (strcmp(SensorsList[index].deviceMACAddress, macAddress) == 0)
                 {
@@ -239,8 +240,8 @@ void example_espnow_task(void *pvParameter)
                             vTaskDelete(NULL);
                         }
                         memset(peer, 0, sizeof(esp_now_peer_info_t));
-                        peer->channel = ESPNOW_CHANNEL;
-                        peer->ifidx = ESPNOW_WIFI_IF;
+                        peer->channel = recv_wifi_channel;
+                        peer->ifidx = ESP_IF_WIFI_STA;
                         peer->encrypt = false;
                         // memcpy(peer->lmk, CONFIG_ESPNOW_LMK, ESP_NOW_KEY_LEN);
                         memcpy(peer->peer_addr, recv_cb->mac_addr, ESP_NOW_ETH_ALEN);
@@ -258,7 +259,7 @@ void example_espnow_task(void *pvParameter)
             if (ret == EXAMPLE_ESPNOW_DATA_SEND)
             {
 
-                ESP_LOGI(TAG, "Received send data from: " MACSTR ", len: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
+                ESP_LOGI(TAG, "Received send data from: " MACSTR ", len: %d, channel: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_wifi_channel, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
 
                 type = EXAMPLE_ESPNOW_DATA_SEND;
                 weightGrams = 123.1;
@@ -267,7 +268,7 @@ void example_espnow_task(void *pvParameter)
             }
             else if (ret == EXAMPLE_ESPNOW_DATA_HEARTBEAT)
             {
-                ESP_LOGI(TAG, "Received heartbeat data from: " MACSTR ", len: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
+                ESP_LOGI(TAG, "Received heartbeat data from: " MACSTR ", len: %d, channel: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_wifi_channel, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
 
                 type = EXAMPLE_ESPNOW_DATA_HEARTBEAT;
                 weightGrams = 123.1;
@@ -277,7 +278,7 @@ void example_espnow_task(void *pvParameter)
             else if (ret == EXAMPLE_ESPNOW_DATA_RESET)
             {
                 bool deviceInList = false;
-                ESP_LOGI(TAG, "Received reset data from: " MACSTR ", len: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
+                ESP_LOGI(TAG, "Received reset data from: " MACSTR ", len: %d, channel: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_wifi_channel, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
 
                 type = EXAMPLE_ESPNOW_DATA_RESET;
                 weightGrams = 123.1;
@@ -289,18 +290,19 @@ void example_espnow_task(void *pvParameter)
                 ESP_LOGI(TAG, "Received error data from: " MACSTR "", MAC2STR(recv_cb->mac_addr));
             }
 
-            if(deviceInList){
+            if (deviceInList)
+            {
                 // Pegando tempo em que envia para o back-end
                 char *stringAgora = pegar_string_tempo_agora();
                 if (xSemaphoreTake(xSemaphoreAcessoInternet, (TickType_t)100) == pdTRUE)
                 {
                     adicionar_mensagem_recebida(
                         stringAgora,
+                        macAddress,
                         type,
                         recv_weightGrams,
                         recv_quantityUnits,
-                        recv_batVoltage
-                    );
+                        recv_batVoltage);
                     free(stringAgora);
                     xSemaphoreGive(xSemaphoreAcessoInternet);
                 }

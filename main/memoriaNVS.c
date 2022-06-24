@@ -1,44 +1,42 @@
 #include "memoriaNVS.h"
 #include "macros.h"
 
-
 // DEFINICOES DOS TAMANHOS DAS MENSAGENS
 #define QUANTIDADE_MENSAGENS 23
 #define TAMANHO_MENSAGEM 150
 #define TAMANHO_CABECALHO 150
 #define TAMANHO_TEMP_DTID 50
 
-#define CMP_HIST_IDX    1
-#define CMP_HIST_SAID   2
-#define CMP_HIST_ENTR   3
-#define CMP_HIST_OBST   4
-#define CMP_HIST_PERD   5
-#define CMP_HIST_REPE   6
-#define CMP_HIST_ECRC   7
-#define CMP_HIST_REIN   8
-#define CMP_HIST_HTBT   9
+#define CMP_HIST_IDX 1
+#define CMP_HIST_SAID 2
+#define CMP_HIST_ENTR 3
+#define CMP_HIST_OBST 4
+#define CMP_HIST_PERD 5
+#define CMP_HIST_REPE 6
+#define CMP_HIST_ECRC 7
+#define CMP_HIST_REIN 8
+#define CMP_HIST_HTBT 9
 
-const char* cabecalho_spiffs = "id,tempo_envio,batidas_a_b,batidas_b_a,nivel_bateria,obstrucao,digital_twin_id\n"; 
+const char *cabecalho_spiffs = "id,tempo_envio,batidas_a_b,batidas_b_a,nivel_bateria,obstrucao,digital_twin_id\n";
 
 int pegar_ultimo_id_backup(void)
 {
     int i = 0;
     char linha[TAMANHO_MENSAGEM];
-    //int CMP_ID = 1;
-    
+    // int CMP_ID = 1;
 
     FILE *arquivo_backup = abrir_arquivo_e_montar_particao("/spiffs/backup_mensagens.csv", "backup", "r");
 
-    while ( fgets(linha, (sizeof(linha)), arquivo_backup) )
+    while (fgets(linha, (sizeof(linha)), arquivo_backup))
     {
-        if ( !is_str_equal(linha, (char*)cabecalho_spiffs) )
+        if (!is_str_equal(linha, (char *)cabecalho_spiffs))
         {
             i++;
         }
     }
 
     fechar_arquivo("backup", arquivo_backup);
-    
+
     return i;
 }
 
@@ -55,18 +53,17 @@ int escrita_nvs_backup(char *tempo, uint32_t batidas_a_b, uint32_t batidas_b_a, 
 
     FILE *arquivo_backup = abrir_arquivo_e_montar_particao("/spiffs/backup_mensagens.csv", "backup", "a");
 
-    fprintf(arquivo_backup, "%d,%s,%d,%d,%d,%d,%s\n", 
-        id_novo, 
-        tempo, 
-        batidas_a_b, 
-        batidas_b_a, 
-        nivel_bateria, 
-        obstrucao, 
-        digital_twin_id
-    );
+    fprintf(arquivo_backup, "%d,%s,%d,%d,%d,%d,%s\n",
+            id_novo,
+            tempo,
+            batidas_a_b,
+            batidas_b_a,
+            nivel_bateria,
+            obstrucao,
+            digital_twin_id);
 
     fechar_arquivo("backup", arquivo_backup);
-   
+
     return confirmacao;
 }
 
@@ -77,15 +74,16 @@ mensagem_backup_iothub *leitura_nvs_backup(int id)
     mensagem_backup_iothub *obj_mensagem = (mensagem_backup_iothub *)malloc(id * sizeof(mensagem_backup_iothub));
     int i = 0;
 
-    while ( fgets(linha, (sizeof(linha)), arquivo_backup) )
+    while (fgets(linha, (sizeof(linha)), arquivo_backup))
     {
-        if ( !is_str_equal(linha, (char*)cabecalho_spiffs) )
+        if (!is_str_equal(linha, (char *)cabecalho_spiffs))
         {
             linha[strlen(linha) - 1] = '\0';
 
             obj_mensagem[i].tempo_envio = (char *)malloc(TAMANHO_TEMP_DTID * sizeof(char));
             obj_mensagem[i].digital_twin_id = (char *)malloc(TAMANHO_TEMP_DTID * sizeof(char));
 
+            obj_mensagem[i].macAddress = (char *)malloc(TAMANHO_TEMP_DTID * sizeof(char));
             obj_mensagem[i].type = string_to_int(parse_field(linha, TYPE, ","));
             obj_mensagem[i].weightGrams = string_to_int(parse_field(linha, WEIGHT, ","));
             obj_mensagem[i].quantityUnits = string_to_int(parse_field(linha, QUANTITY, ","));
@@ -144,18 +142,18 @@ int escrita_mensagem_nao_enviada(mensagem_backup_iothub *chamadas_perdidas_backu
 
     for (int i = 0; i < id; i++)
     {
-        fprintf(arquivo_backup, "%d,%s,%d,%f,%f,%d,%s\n", 
-            i + 1, 
-            chamadas_perdidas_backup[i].tempo_envio, 
-            chamadas_perdidas_backup[i].type, 
-            chamadas_perdidas_backup[i].weightGrams, 
-            chamadas_perdidas_backup[i].quantityUnits, 
-            chamadas_perdidas_backup[i].batVoltage,
-            chamadas_perdidas_backup[i].digital_twin_id
-        );
+        fprintf(arquivo_backup, "%d,%s,%s,%d,%f,%f,%d,%s\n",
+                i + 1,
+                chamadas_perdidas_backup[i].tempo_envio,
+                chamadas_perdidas_backup[i].macAddress,
+                chamadas_perdidas_backup[i].type,
+                chamadas_perdidas_backup[i].weightGrams,
+                chamadas_perdidas_backup[i].quantityUnits,
+                chamadas_perdidas_backup[i].batVoltage,
+                chamadas_perdidas_backup[i].digital_twin_id);
     }
 
     int confirmacao = fechar_arquivo("backup", arquivo_backup);
-   
+
     return confirmacao;
 }

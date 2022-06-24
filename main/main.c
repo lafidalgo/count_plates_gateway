@@ -35,14 +35,14 @@
 #include "espnow_example.h"
 // Variavel para os tipos de conexao
 // Novo comentario
-#define TAMANHO_CAMPOS_CFG          40
+#define TAMANHO_CAMPOS_CFG 40
 
 Device *deviceTwinTempoExecucao = NULL;
 Device device_alocado;
-char * rede_ip;
-char * rede_gateway;
-char * rede_netmask;
-char * rede_dns;
+char *rede_ip;
+char *rede_gateway;
+char *rede_netmask;
+char *rede_dns;
 char *rede_wifi_ssid;
 char *rede_wifi_senha;
 char *rede_gsm_apn;
@@ -56,22 +56,22 @@ const char *TAGinicializacao = "Inicializacao Esp";
 int verificador_ota = 0;
 
 // strings para o uso do dps
-char * dps_hub = NULL;
-char * dps_id = NULL;
+char *dps_hub = NULL;
+char *dps_id = NULL;
 
 void verifica_rede(void)
 {
     // verifica se existe o arquivo na memoria flash contendo a configuracao de rede do device twin
     // caso nao tenha, abre o arquivo de configuracao inicial de rede e usa para se conectar
-    if( verifica_configuracoes_rede() == 0 )
+    if (verifica_configuracoes_rede() == 0)
     {
         // inicializa com rede device twin
         ESP_LOGI("Inicializacao de Rede", "Aplicando rede em memoria");
     }
-    if(!device_connected)
+    if (!device_connected)
     {
         usar_configs_fabrica = !usar_configs_fabrica;
-        mudar_campo_usar_config_fabr(usar_configs_fabrica);   
+        mudar_campo_usar_config_fabr(usar_configs_fabrica);
     }
 }
 
@@ -80,13 +80,13 @@ void azure_task(void *pvParameter)
 {
     // int verificador;
     int cont = 0;
-    
+
     memset(&device_alocado, 0, sizeof(Device));
     deviceTwinTempoExecucao = &device_alocado;
-       
+
     ESP_LOGI(TAGtask, "Connected to AP success!");
-    
-    while ( 1 ) 
+
+    while (1)
     {
         // if( cont !=0 )
         // {
@@ -95,22 +95,22 @@ void azure_task(void *pvParameter)
 
         // verificador = checkConnectionStatus();
 
-        // if( verificador == 1 && cont != 0) 
+        // if( verificador == 1 && cont != 0)
         // {
         //     // escreve as configuracoes de rede caso tenha se conectado com sucesso a internet
         //     // e nao seja a primeira conexao
         //     int status_novas_configs_rede;
         //     status_novas_configs_rede = escreve_configuracao_rede_em_memoria();
-        //     if( status_novas_configs_rede == -1 ) 
+        //     if( status_novas_configs_rede == -1 )
         //     {
         //         ESP_LOGE("Spiffs", "ERRO AO SETAR NOVAS CONFIGS DE REDE EM MEMORIA FLASH");
         //     }
-        //     else 
+        //     else
         //     {
         //         ESP_LOGI("Spiffs", "NOVAS CONFIGURACOES DE REDE ATUALIZADAS EM MEMORIA FLASH");
         //     }
         // }
-        // else if(cont != 0) 
+        // else if(cont != 0)
         // {
         //     ESP_LOGI("Verificacao de Rede", "Voltando para rede salva em memoria . . . ");
         //     if( tipo_conexao_ativa == WIFI )
@@ -119,12 +119,12 @@ void azure_task(void *pvParameter)
         //         desativa_ethernet();
         //     verifica_configuracoes_rede();
         // }
-        InicializarIothubDeviceTwin(*((uint8_t*)pvParameter), dps_hub, dps_id);
+        InicializarIothubDeviceTwin(*((uint8_t *)pvParameter), dps_hub, dps_id);
         cont++;
         ESP_LOGI("MAIN", "Chamou a azure task %d vezes", cont);
         vTaskDelay(10000 / portTICK_PERIOD_MS);
     }
-    
+
     vTaskDelete(NULL);
 }
 
@@ -138,19 +138,19 @@ uint8_t Iniciar_Esp(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     // Aloca memoria para as variaveis contendo as configuracoes da rede
-    rede_ip = (char *)malloc( sizeof(char)*TAMANHO_CAMPOS_CFG );
-    rede_netmask = (char *)malloc( sizeof(char)*TAMANHO_CAMPOS_CFG );
-    rede_gateway = (char *)malloc( sizeof(char)*TAMANHO_CAMPOS_CFG );
-    rede_dns = (char *)malloc( sizeof(char)*TAMANHO_CAMPOS_CFG );
-    rede_wifi_ssid = (char *)malloc( sizeof(char)*TAMANHO_CAMPOS_CFG );
-    rede_wifi_senha = (char *)malloc( sizeof(char)*TAMANHO_CAMPOS_CFG );
-    cert_common_name = (char *)malloc( sizeof(char)*TAMANHO_CAMPOS_CFG );
-    id_scope = (char *)malloc( sizeof(char)*TAMANHO_CAMPOS_CFG );
+    rede_ip = (char *)malloc(sizeof(char) * TAMANHO_CAMPOS_CFG);
+    rede_netmask = (char *)malloc(sizeof(char) * TAMANHO_CAMPOS_CFG);
+    rede_gateway = (char *)malloc(sizeof(char) * TAMANHO_CAMPOS_CFG);
+    rede_dns = (char *)malloc(sizeof(char) * TAMANHO_CAMPOS_CFG);
+    rede_wifi_ssid = (char *)malloc(sizeof(char) * TAMANHO_CAMPOS_CFG);
+    rede_wifi_senha = (char *)malloc(sizeof(char) * TAMANHO_CAMPOS_CFG);
+    cert_common_name = (char *)malloc(sizeof(char) * TAMANHO_CAMPOS_CFG);
+    id_scope = (char *)malloc(sizeof(char) * TAMANHO_CAMPOS_CFG);
 
     Configurar_sntp(); // atualiza o servidor ntp para ser a pool brasileira
     // Inicializa LED e timers
     timer_queue = xQueueCreate(10, sizeof(timer_event_t));
-    
+
     inicializa_timer(TIMER_1, TEST_WITH_RELOAD, TIMER_INTERVAL1_SEC); // timer wifi
     inicializa_timer(TIMER_0, TEST_WITH_RELOAD, TIMER_INTERVAL0_SEC); // timer clocksync
     ESP_LOGI(TAGinicializacao, "Led e Timers");
@@ -172,7 +172,7 @@ uint8_t Iniciar_Esp(void)
     // importante verifica o sstatus da internet antes de chamar IoTHub_Init, se nao houver conexao
     // a funcao fica presa em um loop tentando atualizar o horario com o servidor NTP
 
-    verificador_ota++;                  // adiciona uma inicializacao concluida com sucesso
+    verificador_ota++; // adiciona uma inicializacao concluida com sucesso
 
     // esp_task_wdt_init(60, true); //Inicia o Task WDT com 1min
 
@@ -186,7 +186,7 @@ void enviar_msg_iothub(void *pvParameter)
     int id = 0;
 
     vTaskDelay(2000 / portTICK_PERIOD_MS);
-    
+
     // esp_task_wdt_add(NULL);
     while (1)
     {
@@ -195,29 +195,27 @@ void enviar_msg_iothub(void *pvParameter)
         {
             id = pegar_ultimo_id_backup();
 
-            if ( id > 0 )
+            if (id > 0)
             {
                 mensagem_backup_iothub *chamadas_perdidas_backup = leitura_nvs_backup(id);
 
                 if (xSemaphoreTake(xSemaphoreAcessoInternet, (TickType_t)100) == pdTRUE)
                 {
                     ESP_LOGI("MSG", "ENVIANDO MENSAGEM BACKUP . . .");
-                    
+
                     // nova funcao para enviar mensagem ao iothub, com as novas informacoes
                     verificaStatusMensagem = Enviar_Mensagem_Iothub(chamadas_perdidas_backup, id, 0);
-                
+
                     if (!verificaStatusMensagem)
                     {
                         xSemaphoreGive(xSemaphoreAcessoInternet);
 
-                        
                         escrita_mensagem_nao_enviada(chamadas_perdidas_backup, id);
                         xSemaphoreGive(xSemaphoreAcessoSpiffs);
 
                         for (size_t i = 0; i < id; i++)
                         {
                             free(chamadas_perdidas_backup[i].tempo_envio);
-                            free(chamadas_perdidas_backup[i].digital_twin_id);
                         }
                         free(chamadas_perdidas_backup);
                         vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -228,7 +226,7 @@ void enviar_msg_iothub(void *pvParameter)
                         for (size_t i = 0; i < id; i++)
                         {
                             free(chamadas_perdidas_backup[i].tempo_envio);
-                            free(chamadas_perdidas_backup[i].digital_twin_id);
+                            // free(chamadas_perdidas_backup[i].digital_twin_id);
                         }
                         free(chamadas_perdidas_backup);
                         xSemaphoreGive(xSemaphoreAcessoInternet);
@@ -248,10 +246,10 @@ void enviar_msg_iothub(void *pvParameter)
             if (mensagens->quantidade > 0)
             {
                 ESP_LOGI("MSG", "ENVIANDO MENSAGEM RECEBIDA . . .");
-                
+
                 // nova funcao para enviar mensagem ao iothub, com as novas informacoes
                 verificaStatusMensagem = Enviar_Mensagem_Iothub(mensagens->mensagens_recebidas, mensagens->quantidade, 0);
-            
+
                 if (!verificaStatusMensagem)
                 {
                     if (xSemaphoreTake(xSemaphoreAcessoSpiffs, (TickType_t)100) == pdTRUE)
@@ -278,7 +276,7 @@ void enviar_msg_iothub(void *pvParameter)
             }
         }
 
-        if ( contador_mensagens_perdidas > 10 )
+        if (contador_mensagens_perdidas > 10)
         {
             esp_restart();
         }
@@ -292,7 +290,7 @@ void app_main(void)
 {
     uint8_t erro_init = 0;
     Informacoes_Dispositivo_Dps dps_aut;
-    //Initialize NVS
+    // Initialize NVS
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
@@ -302,18 +300,18 @@ void app_main(void)
     ESP_ERROR_CHECK(ret);
 
     uint8_t verificador_iothub;
-    
+
     verificador_iothub = Iniciar_Esp(); // faz a inicializacao dos componentes
 
-    if (xTaskCreatePinnedToCore(led_status_task, "led_status_task", 2*1024, NULL, 1, NULL, 1) != pdPASS)
+    if (xTaskCreatePinnedToCore(led_status_task, "led_status_task", 2 * 1024, NULL, 1, NULL, 1) != pdPASS)
     {
         ESP_LOGE(TAGtask, "led task fail");
         erro_init = 1;
     }
 
-    while(!device_connected)
+    while (!device_connected)
     {
-        verifica_rede();    // Tenta diferentes configs ate conectar
+        verifica_rede(); // Tenta diferentes configs ate conectar
         vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
     dps_aut = provisiona_dps();
@@ -326,19 +324,19 @@ void app_main(void)
             vTaskDelay(5000 / portTICK_PERIOD_MS);
         }
     }
-    
-    dps_hub = malloc( (strlen(dps_aut.iothub_uri)+1) * sizeof(char));
-    dps_id = malloc( (strlen(dps_aut.device_id)+1) * sizeof(char));
+
+    dps_hub = malloc((strlen(dps_aut.iothub_uri) + 1) * sizeof(char));
+    dps_id = malloc((strlen(dps_aut.device_id) + 1) * sizeof(char));
     strcpy(dps_hub, dps_aut.iothub_uri);
     strcpy(dps_id, dps_aut.device_id);
 
-    //thread para verificar atualizacoes no device twin
+    // thread para verificar atualizacoes no device twin
     if (xTaskCreatePinnedToCore(azure_task, "azure_task", 1024 * 12, &verificador_iothub, 3, NULL, 1) != pdPASS)
     {
         ESP_LOGE(TAGtask, "Task azure fail");
         erro_init = 1;
     }
-     
+
     // Verifica se conseguiu conectar com o device twin, caso nao tenha conseguido, o esp deve reiniciar
     int status_devT = 0;
     while (verifica_status_device_twin() == 0)
@@ -354,14 +352,14 @@ void app_main(void)
         }
     }
 
-    // Apos a conexao com o device twin, testar para ver se inicilizou corretamente 
+    // Apos a conexao com o device twin, testar para ver se inicilizou corretamente
     status_devT = verifica_status_device_twin();
     verificador_ota += status_devT;
     // Realiza um auto diagnostico caso tenha sido feito um update OTA, para ver se as funcionalidades estao corretas
     // ou verificar se eh necessario um rollback
     verificacao_ota(verificador_ota);
-    
-    //task para os timers
+
+    // task para os timers
     if (xTaskCreatePinnedToCore(task_timers, "timer_evt_task", 4096 * 2, NULL, 2, NULL, 1) != pdPASS)
     {
         ESP_LOGE(TAGtask, "Task timer fail");
@@ -375,8 +373,8 @@ void app_main(void)
         erro_init = 1;
     }
 
-    //Create a task to handler UART event from ISR
-    if (xTaskCreatePinnedToCore(example_espnow_task, "example_espnow_task", 20480, NULL, configMAX_PRIORITIES-1, NULL, 0) != pdPASS)
+    // Create a task to handler UART event from ISR
+    if (xTaskCreatePinnedToCore(example_espnow_task, "example_espnow_task", 20480, NULL, configMAX_PRIORITIES - 1, NULL, 0) != pdPASS)
     {
         ESP_LOGE(TAGtask, "ESP NOW fail");
         erro_init = 1;
@@ -386,7 +384,7 @@ void app_main(void)
     // {
     //     ESP_LOGE(TAGtask, "simu fail");
     // }
-    if(!erro_init)
+    if (!erro_init)
     {
         ESP_LOGI(TAGtask, "Gateway Inicializado");
         quantidade_piscadas = 5;
@@ -397,7 +395,7 @@ void app_main(void)
         ESP_LOGE(TAGtask, "Erro Init Gateway");
         quantidade_piscadas = 255;
         velocidade_piscadas = PISCADA_LENTA;
-        vTaskDelay(10000/portTICK_PERIOD_MS);
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
         esp_restart();
     }
 }

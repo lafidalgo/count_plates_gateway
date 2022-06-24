@@ -5,7 +5,8 @@
 #define IOTHUB_CLIENT_SAMPLE_MQTT_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include "freertos/FreeRTOS.h"
@@ -32,49 +33,52 @@ extern "C" {
 #include "autenticacao_dps.h"
 #include "Iothub_DeviceTwin.h"
 
-extern const char *TAGmsgIot;
-extern int contador_mensagens_perdidas;
-extern int8_t json_watchdog_counter;   // 15min para watchdog
-/* Struct para manter uma referencia das mensagens enviadas */
+    extern const char *TAGmsgIot;
+    extern int contador_mensagens_perdidas;
+    extern int8_t json_watchdog_counter; // 15min para watchdog
+    /* Struct para manter uma referencia das mensagens enviadas */
 
 #define NUM_MENS_MAX 10
 
-typedef struct mensagem_envio_tag {
-    int trigger_count;  // valor do par NVS
-    int sensorName; // chave do par NVS
-} Mensagem_Envio_Iothub;
+    typedef struct mensagem_envio_tag
+    {
+        int trigger_count; // valor do par NVS
+        int sensorName;    // chave do par NVS
+    } Mensagem_Envio_Iothub;
 
-typedef struct{
-    int type;
-    float weightGrams; 
-    float quantityUnits;
-    uint32_t batVoltage;
-    char *digital_twin_id; 
-    char *tempo_envio;
-} mensagem_backup_iothub;
+    typedef struct
+    {
+        char *macAddress;
+        int type;
+        float weightGrams;
+        float quantityUnits;
+        uint32_t batVoltage;
+        char *digital_twin_id;
+        char *tempo_envio;
+    } mensagem_backup_iothub;
 
-typedef struct 
-{
-    int quantidade;
-    mensagem_backup_iothub *mensagens_recebidas;
-} objeto_mensagem_ram;
+    typedef struct
+    {
+        int quantidade;
+        mensagem_backup_iothub *mensagens_recebidas;
+    } objeto_mensagem_ram;
 
-/* Fila para mensagens quando a conexao cair */
-xQueueHandle Fila_Batidas_Acumuladas;
+    /* Fila para mensagens quando a conexao cair */
+    xQueueHandle Fila_Batidas_Acumuladas;
 
-/* flag para verificar o callback do status da conexao */
-int IothubMensagemFlag;
-/* FreeRTOS event group to signal when we are connected & ready to make a request */
-int montar_mensagem_iothub(mensagem_backup_iothub *, int, int, char *);
-bool Enviar_Mensagem_Iothub(mensagem_backup_iothub *, int, int);
-bool iniciar_mensagem_recebida(void);
-bool adicionar_mensagem_recebida(char*, int, float, float, uint32_t);
-bool limpar_mensagens_recebidas(void);
-objeto_mensagem_ram *pegar_mensagens(void);
+    /* flag para verificar o callback do status da conexao */
+    int IothubMensagemFlag;
+    /* FreeRTOS event group to signal when we are connected & ready to make a request */
+    int montar_mensagem_iothub(mensagem_backup_iothub *, int, int, char *);
+    bool Enviar_Mensagem_Iothub(mensagem_backup_iothub *, int, int);
+    bool iniciar_mensagem_recebida(void);
+    bool adicionar_mensagem_recebida(char *, char *, int, float, float, uint32_t);
+    bool limpar_mensagens_recebidas(void);
+    objeto_mensagem_ram *pegar_mensagens(void);
 
-void SendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT , void*);
-void connection_status_callback(IOTHUB_CLIENT_CONNECTION_STATUS , IOTHUB_CLIENT_CONNECTION_STATUS_REASON , void* );
-IOTHUBMESSAGE_DISPOSITION_RESULT ReceiveMessageCallback(IOTHUB_MESSAGE_HANDLE , void* );
+    void SendConfirmationCallback(IOTHUB_CLIENT_CONFIRMATION_RESULT, void *);
+    void connection_status_callback(IOTHUB_CLIENT_CONNECTION_STATUS, IOTHUB_CLIENT_CONNECTION_STATUS_REASON, void *);
+    IOTHUBMESSAGE_DISPOSITION_RESULT ReceiveMessageCallback(IOTHUB_MESSAGE_HANDLE, void *);
 
 #ifdef __cplusplus
 }
