@@ -67,6 +67,9 @@ typedef struct SENSOR_TAG
     char *digitalTwinId;
     char *macAddress;
     uint16_t weightReference; // serve para relacionar o elemento que sofreu atualizacao com o armazenado em tempo de exec
+    uint16_t repMeasureQtd;
+    uint16_t ulpWakeUpPeriod;
+    uint16_t heartbeatPeriod;
 } SensorState;
 
 typedef struct rede_configs_tag

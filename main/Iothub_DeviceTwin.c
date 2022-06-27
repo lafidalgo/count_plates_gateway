@@ -86,6 +86,9 @@ char *serializeToJson(Device *device)
         cJSON_AddStringToObject(sensor_object, "digitalTwinId", device->sensor[contador].digitalTwinId);
         cJSON_AddStringToObject(sensor_object, "macAddress", device->sensor[contador].macAddress);
         cJSON_AddNumberToObject(sensor_object, "weightReference", device->sensor[contador].weightReference);
+        cJSON_AddNumberToObject(sensor_object, "repMeasureQtd", device->sensor[contador].repMeasureQtd);
+        cJSON_AddNumberToObject(sensor_object, "ulpWakeUpPeriod", device->sensor[contador].ulpWakeUpPeriod);
+        cJSON_AddNumberToObject(sensor_object, "heartbeatPeriod", device->sensor[contador].heartbeatPeriod);
 
         cJSON_AddItemToArray(array_object, sensor_object);
     }
@@ -274,6 +277,9 @@ Device *parseFromJson(const char *json, DEVICE_TWIN_UPDATE_STATE update_state)
 
         //####################################################################
         char *weightReference_json = (char *)malloc(TAMANHO_MENSAGEM * sizeof(char));
+        char *repMeasureQtd_json = (char *)malloc(TAMANHO_MENSAGEM * sizeof(char));
+        char *ulpWakeUpPeriod_json = (char *)malloc(TAMANHO_MENSAGEM * sizeof(char));
+        char *heartbeatPeriod_json = (char *)malloc(TAMANHO_MENSAGEM * sizeof(char));
         char *digitalTwinId_json = (char *)malloc(TAMANHO_MENSAGEM * sizeof(char));
         char *macAddress_json = (char *)malloc(TAMANHO_MENSAGEM * sizeof(char));
         device->sensor = (SensorState *)malloc(sizeof(SensorState) * num_sensores);
@@ -284,12 +290,30 @@ Device *parseFromJson(const char *json, DEVICE_TWIN_UPDATE_STATE update_state)
         cJSON_ArrayForEach(sensor_atual, sensores_object)
         {
             sprintf(weightReference_json, cJSON_GetObjectItem(sensor_atual, "weightReference")->valuestring);
+            sprintf(repMeasureQtd_json, cJSON_GetObjectItem(sensor_atual, "repMeasureQtd")->valuestring);
+            sprintf(ulpWakeUpPeriod_json, cJSON_GetObjectItem(sensor_atual, "ulpWakeUpPeriod")->valuestring);
+            sprintf(heartbeatPeriod_json, cJSON_GetObjectItem(sensor_atual, "heartbeatPeriod")->valuestring);
             sprintf(digitalTwinId_json, cJSON_GetObjectItem(sensor_atual, "digitalTwinId")->valuestring);
             sprintf(macAddress_json, cJSON_GetObjectItem(sensor_atual, "macAddress")->valuestring);
 
             if (weightReference_json != NULL)
             {
                 device->sensor[k].weightReference = (int)strtol(weightReference_json, NULL, 10);
+            }
+
+            if (repMeasureQtd_json != NULL)
+            {
+                device->sensor[k].repMeasureQtd = (int)strtol(repMeasureQtd_json, NULL, 10);
+            }
+
+            if (ulpWakeUpPeriod_json != NULL)
+            {
+                device->sensor[k].ulpWakeUpPeriod = (int)strtol(ulpWakeUpPeriod_json, NULL, 10);
+            }
+
+            if (heartbeatPeriod_json != NULL)
+            {
+                device->sensor[k].heartbeatPeriod = (int)strtol(heartbeatPeriod_json, NULL, 10);
             }
 
             if (digitalTwinId_json != NULL)
@@ -314,6 +338,9 @@ Device *parseFromJson(const char *json, DEVICE_TWIN_UPDATE_STATE update_state)
         } // end for
 
         free(weightReference_json);
+        free(repMeasureQtd_json);
+        free(ulpWakeUpPeriod_json);
+        free(heartbeatPeriod_json);
         free(digitalTwinId_json);
         free(macAddress_json);
         free(tipo_conexao);
@@ -1014,6 +1041,36 @@ void deviceTwinCallback(DEVICE_TWIN_UPDATE_STATE update_state, const unsigned ch
                     {
                         ESP_LOGI("DEVICE_TWIN", "Received a new sensor[%d].weightReferece = %d", contador, newDevice->sensor[contador].weightReference);
                         oldDevice->sensor[contador].weightReference = newDevice->sensor[contador].weightReference;
+                    }
+                }
+
+                if (newDevice->sensor[contador].repMeasureQtd != 0)
+                {
+                    /* Id de cada sensor */
+                    if (newDevice->sensor[contador].repMeasureQtd != oldDevice->sensor[contador].repMeasureQtd)
+                    {
+                        ESP_LOGI("DEVICE_TWIN", "Received a new sensor[%d].repMeasureQtd = %d", contador, newDevice->sensor[contador].repMeasureQtd);
+                        oldDevice->sensor[contador].repMeasureQtd = newDevice->sensor[contador].repMeasureQtd;
+                    }
+                }
+
+                if (newDevice->sensor[contador].ulpWakeUpPeriod != 0)
+                {
+                    /* Id de cada sensor */
+                    if (newDevice->sensor[contador].ulpWakeUpPeriod != oldDevice->sensor[contador].ulpWakeUpPeriod)
+                    {
+                        ESP_LOGI("DEVICE_TWIN", "Received a new sensor[%d].ulpWakeUpPeriod = %d", contador, newDevice->sensor[contador].ulpWakeUpPeriod);
+                        oldDevice->sensor[contador].ulpWakeUpPeriod = newDevice->sensor[contador].ulpWakeUpPeriod;
+                    }
+                }
+
+                if (newDevice->sensor[contador].heartbeatPeriod != 0)
+                {
+                    /* Id de cada sensor */
+                    if (newDevice->sensor[contador].heartbeatPeriod != oldDevice->sensor[contador].heartbeatPeriod)
+                    {
+                        ESP_LOGI("DEVICE_TWIN", "Received a new sensor[%d].heartbeatPeriod = %d", contador, newDevice->sensor[contador].heartbeatPeriod);
+                        oldDevice->sensor[contador].heartbeatPeriod = newDevice->sensor[contador].heartbeatPeriod;
                     }
                 }
 

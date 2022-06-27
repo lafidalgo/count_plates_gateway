@@ -135,6 +135,9 @@ void example_espnow_data_prepare(example_espnow_send_param_t *send_param, int ty
     buf->batVoltage = 0;
 
     buf->weightReference = deviceTwinTempoExecucao->sensor[index].weightReference;
+    buf->repMeasureQtd = deviceTwinTempoExecucao->sensor[index].repMeasureQtd;
+    buf->ulpWakeUpPeriod = deviceTwinTempoExecucao->sensor[index].ulpWakeUpPeriod;
+    buf->heartbeatPeriod = deviceTwinTempoExecucao->sensor[index].heartbeatPeriod;
 
     buf->crc = esp_crc16_le(UINT16_MAX, (uint8_t const *)buf, send_param->len);
 }
