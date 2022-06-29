@@ -130,6 +130,7 @@ void example_espnow_data_prepare(example_espnow_send_param_t *send_param, int ty
     buf->type = type;
     buf->crc = 0;
 
+    buf->is_ack = true;
     buf->weightGrams = 0;
     buf->quantityUnits = 0;
     buf->batVoltage = 0;
