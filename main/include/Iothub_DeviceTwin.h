@@ -70,6 +70,7 @@ typedef struct SENSOR_TAG
     uint16_t repMeasureQtd;
     uint16_t ulpWakeUpPeriod;
     uint16_t heartbeatPeriod;
+    uint16_t repEspNowSend;
 } SensorState;
 
 typedef struct rede_configs_tag
