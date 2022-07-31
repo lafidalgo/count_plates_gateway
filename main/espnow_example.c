@@ -36,6 +36,7 @@
 
 #define ESPNOW_MAXDELAY 512
 #define ESPNOW_PMK "pmk1234567890123"
+#define SIZE_DIGITAL_TWIN 30
 
 static const char *TAG = "espnow_example";
 
@@ -156,6 +157,7 @@ void example_espnow_task(void *pvParameter)
     uint32_t recv_batVoltage = 0;
     int ret;
     int type = 0;
+    char digital_twin_id[SIZE_DIGITAL_TWIN];
 
     /*ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -213,6 +215,7 @@ void example_espnow_task(void *pvParameter)
                 if (strcmp(deviceTwinTempoExecucao->sensor[index].macAddress, macAddress) == 0)
                 {
                     deviceInList = true;
+                    sprintf(digital_twin_id, deviceTwinTempoExecucao->sensor[index].digitalTwinId);
 
                     /* If MAC address does not exist in peer list, add it to peer list. */
                     if (esp_now_is_peer_exist(recv_cb->mac_addr) == false)
@@ -254,7 +257,6 @@ void example_espnow_task(void *pvParameter)
             }
             else if (ret == EXAMPLE_ESPNOW_DATA_RESET)
             {
-                bool deviceInList = false;
                 ESP_LOGI(TAG, "Received reset data from: " MACSTR ", len: %d, channel: %d, payload: %f\t%f\t%d", MAC2STR(recv_cb->mac_addr), recv_cb->data_len, recv_wifi_channel, recv_weightGrams, recv_quantityUnits, recv_batVoltage);
                 type = EXAMPLE_ESPNOW_DATA_RESET;
             }
@@ -275,7 +277,8 @@ void example_espnow_task(void *pvParameter)
                         type,
                         recv_weightGrams,
                         recv_quantityUnits,
-                        recv_batVoltage);
+                        recv_batVoltage,
+                        digital_twin_id);
                     free(stringAgora);
                     xSemaphoreGive(xSemaphoreAcessoInternet);
                 }
