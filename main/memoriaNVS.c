@@ -83,7 +83,6 @@ mensagem_backup_iothub *leitura_nvs_backup(int id)
             obj_mensagem[i].tempo_envio = (char *)malloc(TAMANHO_TEMP_DTID * sizeof(char));
             obj_mensagem[i].digital_twin_id = (char *)malloc(TAMANHO_TEMP_DTID * sizeof(char));
 
-            obj_mensagem[i].macAddress = (char *)malloc(TAMANHO_TEMP_DTID * sizeof(char));
             obj_mensagem[i].type = string_to_int(parse_field(linha, TYPE, ","));
             obj_mensagem[i].weightGrams = string_to_int(parse_field(linha, WEIGHT, ","));
             obj_mensagem[i].quantityUnits = string_to_int(parse_field(linha, QUANTITY, ","));
@@ -142,10 +141,9 @@ int escrita_mensagem_nao_enviada(mensagem_backup_iothub *chamadas_perdidas_backu
 
     for (int i = 0; i < id; i++)
     {
-        fprintf(arquivo_backup, "%d,%s,%s,%d,%f,%f,%d,%s\n",
+        fprintf(arquivo_backup, "%d,%s,%d,%f,%f,%d,%s\n",
                 i + 1,
                 chamadas_perdidas_backup[i].tempo_envio,
-                chamadas_perdidas_backup[i].macAddress,
                 chamadas_perdidas_backup[i].type,
                 chamadas_perdidas_backup[i].weightGrams,
                 chamadas_perdidas_backup[i].quantityUnits,

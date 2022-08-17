@@ -273,7 +273,7 @@ void example_espnow_task(void *pvParameter)
                 {
                     adicionar_mensagem_recebida(
                         stringAgora,
-                        macAddress,
+
                         type,
                         recv_weightGrams,
                         recv_quantityUnits,

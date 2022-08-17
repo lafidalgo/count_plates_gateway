@@ -146,9 +146,8 @@ int montar_mensagem_iothub(
 
     for (int i = init; i < end; i++)
     {
-        sprintf(array_json, "{\"published\":\"%s\",\"macAddress\":%s,\"dtId\":\"%s\",\"type\":%d,\"weightGrams\":%.2f,\"quantityUnits\":%.2f,\"batVoltage\":%d}",
+        sprintf(array_json, "{\"published\":\"%s\",\"dtId\":\"%s\",\"type\":%d,\"weightGrams\":%.2f,\"quantityUnits\":%.2f,\"batVoltage\":%d}",
                 chamadas_perdidas_backup[i].tempo_envio,
-                chamadas_perdidas_backup[i].macAddress,
                 chamadas_perdidas_backup[i].digital_twin_id,
                 chamadas_perdidas_backup[i].type,
                 chamadas_perdidas_backup[i].weightGrams,
@@ -303,21 +302,19 @@ bool iniciar_mensagem_recebida(void)
     return true;
 }
 
-bool adicionar_mensagem_recebida(char *tempo, char *macAddress, int type, float weightGrams, float quantityUnits, uint32_t batVoltage, char *digital_twin_id)
+bool adicionar_mensagem_recebida(char *tempo, int type, float weightGrams, float quantityUnits, uint32_t batVoltage, char *digital_twin_id)
 {
     mensagem_ram->mensagens_recebidas = (mensagem_backup_iothub *)realloc(mensagem_ram->mensagens_recebidas, sizeof(mensagem_backup_iothub) * (mensagem_ram->quantidade + 1));
 
     mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].tempo_envio = (char *)malloc((strlen(tempo) + 1) * sizeof(char));
     mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].digital_twin_id = (char *)malloc((strlen(digital_twin_id) + 1) * sizeof(char));
 
-    mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].macAddress = (char *)malloc((strlen(macAddress) + 1) * sizeof(char));
     mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].type = type;
     mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].weightGrams = weightGrams;
     mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].quantityUnits = quantityUnits;
     mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].batVoltage = batVoltage;
 
     strcpy(mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].tempo_envio, tempo);
-    strcpy(mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].macAddress, macAddress);
     strcpy(mensagem_ram->mensagens_recebidas[mensagem_ram->quantidade].digital_twin_id, digital_twin_id);
 
     mensagem_ram->quantidade++;

@@ -48,7 +48,6 @@ extern "C"
 
     typedef struct
     {
-        char *macAddress;
         int type;
         float weightGrams;
         float quantityUnits;
@@ -72,7 +71,7 @@ extern "C"
     int montar_mensagem_iothub(mensagem_backup_iothub *, int, int, char *);
     bool Enviar_Mensagem_Iothub(mensagem_backup_iothub *, int, int);
     bool iniciar_mensagem_recebida(void);
-    bool adicionar_mensagem_recebida(char *, char *, int, float, float, uint32_t, char *);
+    bool adicionar_mensagem_recebida(char *, int, float, float, uint32_t, char *);
     bool limpar_mensagens_recebidas(void);
     objeto_mensagem_ram *pegar_mensagens(void);
 
